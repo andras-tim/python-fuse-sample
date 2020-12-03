@@ -2,9 +2,10 @@
 
 from __future__ import with_statement
 
+import errno
 import os
 import sys
-import errno
+from time import sleep
 
 from fuse import FUSE, FuseOSError, Operations
 
@@ -47,9 +48,15 @@ class Passthrough(Operations):
     def readdir(self, path, fh):
         full_path = self._full_path(path)
 
+        print('readdir in {!r}'.format(path))
+        if path.startswith('/2020'):
+            print('sleeping 10')
+            sleep(10)
+
         dirents = ['.', '..']
         if os.path.isdir(full_path):
             dirents.extend(os.listdir(full_path))
+
         for r in dirents:
             yield r
 
@@ -128,7 +135,8 @@ class Passthrough(Operations):
 
 
 def main(mountpoint, root):
-    FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
+    FUSE(Passthrough(os.path.abspath(root)), os.path.abspath(mountpoint), nothreads=True, foreground=True)
+
 
 if __name__ == '__main__':
     main(sys.argv[2], sys.argv[1])
